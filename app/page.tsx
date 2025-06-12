@@ -10,6 +10,8 @@ import { useCart } from "@/context/CartContext"
 import { CartDropdown } from "@/components/ui/cart/cart-dropdown"
 import { CountdownTimer } from "@/components/ui/countdown-timer"
 import ProductModal from "@/components/ui/modal/product-modal-redesigned"
+import { ProductCardSkeleton } from "@/components/ui/skeleton/product-card-skeleton"
+import ProductCard from "@/app/products/_components/product-card"
 
 import { useState, useEffect } from "react";
 
@@ -33,6 +35,12 @@ export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const { cart } = useCart();
+  
+  // Handle opening the product modal
+  const handleOpenModal = (productId: string) => {
+    setSelectedProductId(productId);
+    setIsModalOpen(true);
+  };
 
   // Initialize theme from localStorage or system preference
   useEffect(() => {
@@ -145,20 +153,48 @@ export default function HomePage() {
           setSalesOfTheDay(sanitizedProducts);
           
           if (data.sale && data.sale.endDate) {
-            // Ensure the end date is properly parsed and set to future date
-            const endDate = new Date(data.sale.endDate);
-            console.log('Sale end date from API:', endDate);
+            // Ensure the end date is properly parsed as a Date object
+            let endDate;
             
-            // Make sure the end date is in the future
-            const now = new Date();
-            if (endDate > now) {
-              setSaleEndDate(endDate);
-            } else {
-              // If the end date from API is in the past, set a future date to avoid showing "Deal Expired"
-              const futureDate = new Date();
-              futureDate.setDate(futureDate.getDate() + 7);
-              setSaleEndDate(futureDate);
-              console.log('End date was in the past, using fallback date:', futureDate);
+            try {
+              // Handle various date formats that might come from the API
+              if (typeof data.sale.endDate === 'string') {
+                endDate = new Date(data.sale.endDate);
+              } else if (data.sale.endDate instanceof Date) {
+                endDate = data.sale.endDate;
+              } else if (typeof data.sale.endDate === 'object' && data.sale.endDate.$date) {
+                // Handle MongoDB date format if it comes as an object with $date property
+                endDate = new Date(data.sale.endDate.$date);
+              } else {
+                throw new Error('Unrecognized date format');
+              }
+              
+              console.log('Sale end date from API:', endDate, 'Is valid date:', !isNaN(endDate.getTime()));
+              
+              // Validate the date is actually valid
+              if (isNaN(endDate.getTime())) {
+                throw new Error('Invalid date value');
+              }
+              
+              // Make sure the end date is in the future
+              const now = new Date();
+              if (endDate > now) {
+                setSaleEndDate(endDate);
+                console.log('Using valid future end date:', endDate);
+              } else {
+                // If the end date from API is in the past, set a future date to avoid showing "Deal Expired"
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 7);
+                setSaleEndDate(futureDate);
+                console.log('End date was in the past, using fallback date:', futureDate);
+              }
+            } catch (error) {
+              console.error('Error parsing end date:', error);
+              // Use fallback date if parsing fails
+              const fallbackDate = new Date();
+              fallbackDate.setDate(fallbackDate.getDate() + 7);
+              setSaleEndDate(fallbackDate);
+              console.log('Error with end date, using fallback date:', fallbackDate);
             }
           } else {
             // Fallback end date
@@ -319,10 +355,15 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading ? (
-              <div className="text-center py-12 text-gray-500">Loading sales...</div>
+            {saleLoading ? (
+              // Show skeleton loading when loading sales
+              Array(3).fill(0).map((_, index) => (
+                <div key={`sale-skeleton-${index}`} className="block h-full">
+                  <ProductCardSkeleton />
+                </div>
+              ))
             ) : salesOfTheDay.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">No sales found today.</div>
+              <div className="text-center py-12 col-span-3 text-gray-500">No sales found today.</div>
             ) : (
               salesOfTheDay.map((product) => {
                 // Debug logging for each product
@@ -573,35 +614,24 @@ export default function HomePage() {
         </div>
       </section>
 
-
-      {/* Categories */}
+      {/* Featured Products */}
       <section className="py-12 bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-8 dark:text-gray-100">Shop by Category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.map((category) => (
-              <Link
-                key={category.type}
-                href={category.href}
-                className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center hover:shadow-md transition-shadow flex flex-col items-center justify-center border border-gray-200 dark:border-gray-700"
-              >
-                <span className="text-4xl mb-4">{category.icon}</span>
-                <h3 className="font-semibold text-lg">{category.name}</h3>
-                {Object.keys(categoryCounts).length > 0 ? (
-                  <p className="text-sm text-gray-500 mt-1">
-                    {/* Ensure we're only rendering numbers or strings */}
-                    {(() => {
-                      const count = categoryCounts[category.type];
-                      return typeof count === 'number' ? `${count} items` : '0 items';
-                    })()} 
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-500 mt-1">
-                    <span className="inline-block w-12 h-4 bg-gray-200 animate-pulse rounded"></span>
-                  </p>
-                )}
-              </Link>
-            ))}
+          <h2 className="text-3xl font-bold text-center mb-8 dark:text-gray-100">Featured Products</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {loading ? (
+              // Show skeleton loading when loading
+              Array(8).fill(0).map((_, index) => (
+                <div key={`skeleton-${index}`} className="block h-full">
+                  <ProductCardSkeleton />
+                </div>
+              ))
+            ) : (
+              // Show actual products when loaded
+              products.slice(0, 8).map((product) => (
+                <ProductCard key={product._id} product={product} onOpenModal={handleOpenModal} />
+              ))
+            )}
           </div>
         </div>
       </section>

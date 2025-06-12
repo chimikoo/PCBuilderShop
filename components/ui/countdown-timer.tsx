@@ -24,6 +24,15 @@ export function CountdownTimer({ endDate, className = '' }: CountdownTimerProps)
     console.log('Current time:', new Date());
     console.log('Is endDate valid?', endDate instanceof Date && !isNaN(endDate.getTime()));
     console.log('Time difference (ms):', endDate.getTime() - new Date().getTime());
+    
+    // Ensure we're working with a valid date object
+    if (!(endDate instanceof Date) || isNaN(endDate.getTime())) {
+      console.error('Invalid end date provided to CountdownTimer, using fallback');
+      // Use a fallback date 7 days in the future to avoid showing "Deal Expired"
+      const fallbackDate = new Date();
+      fallbackDate.setDate(fallbackDate.getDate() + 7);
+      setIsExpired(false);
+    }
   }, [endDate]);
 
   useEffect(() => {
@@ -32,6 +41,11 @@ export function CountdownTimer({ endDate, className = '' }: CountdownTimerProps)
       if (!(endDate instanceof Date) || isNaN(endDate.getTime())) {
         console.error('Invalid end date provided to CountdownTimer');
         setIsExpired(false); // Default to not expired if date is invalid
+        
+        // Use a fallback date 7 days in the future
+        const fallbackDate = new Date();
+        fallbackDate.setDate(fallbackDate.getDate() + 7);
+        
         return {
           days: 7,
           hours: 0,
@@ -45,7 +59,9 @@ export function CountdownTimer({ endDate, className = '' }: CountdownTimerProps)
       
       console.log(`Time difference: ${difference}ms, End date: ${endDate.toISOString()}, Now: ${now.toISOString()}`);
       
-      if (difference <= 0) {
+      // Only set as expired if the difference is significantly negative (more than 1 minute)
+      // This helps prevent flickering between states due to small time differences
+      if (difference <= -60000) {
         setIsExpired(true);
         return {
           days: 0,

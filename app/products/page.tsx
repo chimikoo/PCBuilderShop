@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useInitialCategoryFromQuery } from "./useInitialCategoryFromQuery";
 import ProductCard from "./_components/product-card";
 import ProductModal from "@/components/ui/modal/product-modal-redesigned";
+import { ProductCardSkeleton } from "@/components/ui/skeleton/product-card-skeleton";
 
 export default function Page() {
   // --- State variables for filters ---
@@ -384,8 +385,12 @@ export default function Page() {
           
           {/* Products grid */}
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {Array(8).fill(0).map((_, index) => (
+                <div key={`product-skeleton-${index}`} className="block h-full">
+                  <ProductCardSkeleton />
+                </div>
+              ))}
             </div>
           ) : filteredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
