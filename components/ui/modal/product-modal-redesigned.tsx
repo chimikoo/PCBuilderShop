@@ -19,6 +19,7 @@ export default function ProductModal({ productId, isOpen, onClose }: ProductModa
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [randomReviewCount] = useState(Math.floor(Math.random() * 100) + 10); // Store random review count in state
 
   useEffect(() => {
     if (isOpen && productId) {
@@ -185,7 +186,7 @@ export default function ProductModal({ productId, isOpen, onClose }: ProductModa
             </div>
             
             {/* Product Details Section - Right Side */}
-            <div className="w-full md:w-1/2 p-6 md:p-8 overflow-y-auto max-h-[85vh] md:max-h-none">
+            <div className="w-full md:w-1/2 p-6 md:p-8 overflow-y-auto max-h-[85vh] md:max-h-none flex flex-col">
               {/* Product Header */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-1">
@@ -217,7 +218,7 @@ export default function ProductModal({ productId, isOpen, onClose }: ProductModa
                     ))}
                   </div>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {product.rating || 4.5} ({product.reviews?.length || Math.floor(Math.random() * 100) + 10} reviews)
+                    {product.rating || 4.5} ({product.reviews?.length || randomReviewCount} reviews)
                   </span>
                 </div>
                 
@@ -279,14 +280,14 @@ export default function ProductModal({ productId, isOpen, onClose }: ProductModa
               />
               
               {/* Tabs for Specs & Reviews */}
-              <Tabs defaultValue="specs" className="mt-6">
+              <Tabs defaultValue="specs" className="mt-6 flex-grow flex flex-col">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="specs">Specifications</TabsTrigger>
                   <TabsTrigger value="reviews">Reviews</TabsTrigger>
                 </TabsList>
                 
                 {/* Specifications Tab */}
-                <TabsContent value="specs" className="mt-4">
+                <TabsContent value="specs" className="mt-4 flex-1 overflow-y-auto">
                   <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
                     <div className="p-4">
                       <h3 className="font-medium text-lg text-gray-900 dark:text-gray-100 mb-4">Technical Specifications</h3>
@@ -615,7 +616,7 @@ export default function ProductModal({ productId, isOpen, onClose }: ProductModa
                 </TabsContent>
                 
                 {/* Reviews Tab */}
-                <TabsContent value="reviews" className="mt-4">
+                <TabsContent value="reviews" className="mt-4 flex-1 overflow-y-auto">
                   <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-medium text-gray-900 dark:text-gray-100">Customer Reviews</h3>
