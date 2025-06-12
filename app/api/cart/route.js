@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
+import connectDB from '@/lib/dbConnect';
 import Cart from '@/models/Cart';
 
 // GET /api/cart?userId=123
